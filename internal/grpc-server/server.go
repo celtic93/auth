@@ -38,14 +38,14 @@ func (s *Server) Create(_ context.Context, req *desc.CreateRequest) (*desc.Creat
 	}, nil
 }
 
-// Create: creates user
+// Update: updates user
 func (s *Server) Update(_ context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
 	log.Printf("server.Update User id: %d", req.GetId())
 
 	return &emptypb.Empty{}, nil
 }
 
-// Create: creates user
+// Delete: deletes user
 func (s *Server) Delete(_ context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("server.Delete User id: %d", req.GetId())
 
