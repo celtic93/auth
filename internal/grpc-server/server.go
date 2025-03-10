@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/brianvoe/gofakeit"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -13,6 +14,7 @@ import (
 
 type Server struct {
 	desc.UnimplementedUserV1Server
+	Pool *pgxpool.Pool
 }
 
 // Get: gets user by ID
