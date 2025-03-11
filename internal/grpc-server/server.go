@@ -133,8 +133,24 @@ func (s *Server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.
 }
 
 // Delete: deletes user
-func (s *Server) Delete(_ context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
+func (s *Server) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("server.Delete User id: %d", req.GetId())
+	builderDelete := sq.Delete(usersTable).
+		PlaceholderFormat(sq.Dollar).
+		Where(sq.Eq{columnID: req.GetId()})
+
+	query, args, err := builderDelete.ToSql()
+	if err != nil {
+		log.Print(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if _, err = s.Pool.Exec(ctx, query, args...); err != nil {
+		log.Print(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	log.Printf("deleted user with id: %d", req.GetId())
 
 	return &emptypb.Empty{}, nil
 }
