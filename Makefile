@@ -37,3 +37,6 @@ db-migrate:
 
 db-rollback:
 	$(LOCAL_BIN)/goose -dir ${MIGRATION_DIR} postgres ${PG_DSN} down -v
+
+run:
+	go run cmd/main.go
