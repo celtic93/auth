@@ -37,7 +37,7 @@ func (s *Server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 	builderSelectOne := sq.Select(columnID, name, email, role, createdAt, updatedAt).
 		From(usersTable).
 		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{"id": req.GetId()}).
+		Where(sq.Eq{columnID: req.GetId()}).
 		Limit(1)
 
 	query, args, err := builderSelectOne.ToSql()
@@ -100,8 +100,34 @@ func (s *Server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.Cre
 }
 
 // Update: updates user
-func (s *Server) Update(_ context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
+func (s *Server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
 	log.Printf("server.Update User id: %d", req.GetId())
+
+	if req.GetEmail() == "" {
+		log.Print("email is empty")
+		return nil, status.Error(codes.InvalidArgument, "email can't be blank")
+	}
+
+	builderUpdate := sq.Update(usersTable).
+		PlaceholderFormat(sq.Dollar).
+		Set(name, req.GetName()).
+		Set(email, req.GetEmail()).
+		Set(updatedAt, time.Now()).
+		Where(sq.Eq{columnID: req.GetId()})
+
+	query, args, err := builderUpdate.ToSql()
+	if err != nil {
+		log.Print(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	_, err = s.Pool.Exec(ctx, query, args...)
+	if err != nil {
+		log.Print(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	log.Printf("updated user with id: %d", req.GetId())
 
 	return &emptypb.Empty{}, nil
 }
