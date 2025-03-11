@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/brianvoe/gofakeit"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,13 +16,14 @@ import (
 )
 
 const (
-	columnID  string = "id"
-	name      string = "name"
-	email     string = "email"
-	password  string = "password"
-	role      string = "role"
-	createdAt string = "created_at"
-	updatedAt string = "updated_at"
+	columnID   string = "id"
+	name       string = "name"
+	email      string = "email"
+	password   string = "password"
+	role       string = "role"
+	createdAt  string = "created_at"
+	updatedAt  string = "updated_at"
+	usersTable string = "users"
 )
 
 type Server struct {
@@ -32,17 +32,35 @@ type Server struct {
 }
 
 // Get: gets user by ID
-func (s *Server) Get(_ context.Context, req *desc.GetRequest) (*desc.GetResponse, error) {
+func (s *Server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetResponse, error) {
 	log.Printf("server.Get User id: %d", req.GetId())
+	builderSelectOne := sq.Select(columnID, name, email, role, createdAt, updatedAt).
+		From(usersTable).
+		PlaceholderFormat(sq.Dollar).
+		Where(sq.Eq{"id": req.GetId()}).
+		Limit(1)
 
-	return &desc.GetResponse{
-		Id:        req.GetId(),
-		Name:      gofakeit.Name(),
-		Email:     gofakeit.Email(),
-		Role:      desc.Role_USER,
-		CreatedAt: timestamppb.New(gofakeit.Date()),
-		UpdatedAt: timestamppb.New(gofakeit.Date()),
-	}, nil
+	query, args, err := builderSelectOne.ToSql()
+	if err != nil {
+		log.Print(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	var resp desc.GetResponse
+	var createdAt, updatedAt time.Time
+
+	err = s.Pool.QueryRow(ctx, query, args...).Scan(&resp.Id, &resp.Name, &resp.Email, &resp.Role, &createdAt, &updatedAt)
+	if err != nil {
+		log.Print(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	resp.CreatedAt = timestamppb.New(createdAt)
+	resp.UpdatedAt = timestamppb.New(updatedAt)
+	log.Printf("get user id: %d, name: %s, email: %s, role: %d, created_at: %v, updated_at: %v\n",
+		resp.Id, resp.Name, resp.Email, resp.Role, resp.CreatedAt, resp.UpdatedAt)
+
+	return &resp, nil
 }
 
 // Create: creates user
@@ -50,11 +68,12 @@ func (s *Server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.Cre
 	log.Printf("server.Create User id: %s", req.GetEmail())
 
 	if req.GetPassword() != req.GetPasswordConfirmation() {
+		log.Print("password doesn't match")
 		return nil, status.Error(codes.InvalidArgument, "password doesn't match")
 	}
 
 	timeNow := time.Now()
-	builderInsert := sq.Insert("users").
+	builderInsert := sq.Insert(usersTable).
 		PlaceholderFormat(sq.Dollar).
 		Columns(name, email, password, role, createdAt, updatedAt).
 		Values(req.GetName(), req.GetEmail(), req.GetPassword(), req.GetRole(), timeNow, timeNow).
