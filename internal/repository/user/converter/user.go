@@ -1,7 +1,7 @@
 package converter
 
 import (
-	"github.com/celtic93/auth/internal/repository/user/model"
+	"github.com/celtic93/auth/internal/model"
 	modelRepo "github.com/celtic93/auth/internal/repository/user/model"
 )
 
