@@ -12,13 +12,13 @@ import (
 )
 
 func (i *Implementation) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
-	log.Printf("service.User.Update started. Update user with id: %d", req.Id)
+	log.Printf("api.User.Update started. Update user with id: %d", req.Id)
 	err := i.userService.Update(ctx, converter.ToUserFromUpdateRequest(req))
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	log.Printf("service.User.Update ended. Updated user with id: %d", req.Id)
+	log.Printf("api.User.Update ended. Updated user with id: %d", req.Id)
 
 	return &emptypb.Empty{}, nil
 }
