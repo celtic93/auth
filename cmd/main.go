@@ -10,8 +10,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
+	userAPI "github.com/celtic93/auth/internal/api/user"
 	"github.com/celtic93/auth/internal/config"
-	server "github.com/celtic93/auth/internal/grpc-server"
+	userRepository "github.com/celtic93/auth/internal/repository/user"
+	userService "github.com/celtic93/auth/internal/service/user"
 	desc "github.com/celtic93/auth/pkg/v1/user"
 )
 
@@ -31,6 +33,11 @@ func main() {
 		log.Fatalf("failed to get pg config: %v", err)
 	}
 
+	conn, err := net.Listen("tcp", grpcConfig.Address())
+	if err != nil {
+		log.Fatal(color.RedString("failed to serve grpc server: %v", err))
+	}
+
 	ctx := context.Background()
 	pool, err := pgxpool.Connect(ctx, pgConfig.DSN())
 	if err != nil {
@@ -38,17 +45,15 @@ func main() {
 	}
 	defer pool.Close()
 
-	conn, err := net.Listen("tcp", grpcConfig.Address())
-	if err != nil {
-		log.Fatal(color.RedString("failed to serve grpc server: %v", err))
-	}
+	userRepo := userRepository.NewRepository(pool)
+	userServ := userService.NewService(userRepo)
 
 	log.Print(color.GreenString("UserAPI grpc server listening on: %s", conn.Addr().String()))
 
 	gsrv := grpc.NewServer()
 	reflection.Register(gsrv)
 
-	desc.RegisterUserV1Server(gsrv, &server.Server{Pool: pool})
+	desc.RegisterUserV1Server(gsrv, userAPI.NewImplementation(userServ))
 
 	if err = gsrv.Serve(conn); err != nil {
 		log.Fatal(color.RedString("failed to serve grpc server: %v", err))
