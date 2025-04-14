@@ -7,8 +7,8 @@ CREATE TABLE users
     password text not null,
     name text,
     role int8 check ( role > 0 ),
-    created_at timestamp(0) default CURRENT_TIMESTAMP,
-    updated_at timestamp(0)
+    created_at timestamp(0) not null default CURRENT_TIMESTAMP,
+    updated_at timestamp(0) not null
 );
 -- +goose StatementEnd
 
