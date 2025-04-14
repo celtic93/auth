@@ -11,12 +11,13 @@ import (
 )
 
 func (i *Implementation) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetResponse, error) {
+	log.Printf("api.User.Get started. Get user with id: %d", req.Id)
 	user, err := i.userService.Get(ctx, req.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	log.Printf("get user with id: %d", req.Id)
+	log.Printf("api.User.Get ended. Got user with id: %d", req.Id)
 
 	return converter.ToGetResponseFromUser(user), nil
 }

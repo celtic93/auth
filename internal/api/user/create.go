@@ -11,12 +11,13 @@ import (
 )
 
 func (i *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
+	log.Printf("api.User.Create started. Create user with id: %s", req.Email)
 	id, err := i.userService.Create(ctx, converter.ToUserFromCreateRequest(req))
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	log.Printf("inserted user with id: %d", id)
+	log.Printf("api.User.Create ended. Created user with id: %d", id)
 
 	return &desc.CreateResponse{
 		Id: id,

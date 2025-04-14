@@ -9,8 +9,9 @@ import (
 )
 
 func (s *serv) Update(ctx context.Context, user *model.User) error {
+	log.Printf("service.User.Update started. Update user with id: %d", user.ID)
 	if user.Email == "" {
-		log.Print("email is empty")
+		log.Print("Error. Email is empty")
 		return fmt.Errorf("email can't be blank")
 	}
 
@@ -18,6 +19,8 @@ func (s *serv) Update(ctx context.Context, user *model.User) error {
 	if err != nil {
 		return err
 	}
+
+	log.Printf("service.User.Update ended. Updated user with id: %d", user.ID)
 
 	return nil
 }
